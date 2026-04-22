@@ -1,6 +1,6 @@
 # backend/dependencies.py
 
-from backend.database import SessionLocal
+from database import SessionLocal
 from sqlalchemy.orm import Session
 from fastapi import Depends
 

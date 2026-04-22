@@ -6,76 +6,114 @@ export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("username", username);
-    formData.append("email", email);
-    formData.append("password", password);
+    setIsLoading(true);
+    setError("");
+
+    const params = new URLSearchParams();
+    params.append("username", username);
+    params.append("email", email);
+    params.append("password", password);
 
     try {
-      const res = await axios.post("http://localhost:8000/register", formData);
-      console.log("✅ Registered:", res.data);
-      navigate("/"); // redirect to login page
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/register`, params);
+      navigate("/");
     } catch (err) {
-      console.error("❌ Registration failed:", err.response?.data || err.message);
-      setError("Registration failed. Email may already be in use.");
+      setError(err.response?.data?.detail || "Registration failed. Data integrity mismatch.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-      <form
-        onSubmit={handleRegister}
-        className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Register</h2>
-
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3 text-white-700"
-            required
-          />
+    <div className="flex items-center justify-center min-h-screen p-6 pt-32">
+      <div className="neo-card w-full max-w-md p-12 reveal relative overflow-hidden">
+        {/* Futuristic accent */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 opacity-50" />
+        
+        <div className="text-center mb-12">
+          <div className="inline-block p-4 rounded-2xl bg-blue-600/10 mb-6 border border-blue-500/20">
+            <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+          <h2 className="text-4xl font-bold heading-futuristic mb-4">Initialize Identity</h2>
+          <p className="text-gray-500 font-medium">Create your decentralized credential vault</p>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3 text-white-700"
-            required
-          />
-        </div>
+        {error && (
+          <div className="mb-8 bg-red-500/5 border border-red-500/20 text-red-400 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider text-center">
+            {error}
+          </div>
+        )}
 
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3 text-white-700"
-            required
-          />
-        </div>
+        <form onSubmit={handleRegister} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-2">Username</label>
+            <input
+              type="text"
+              placeholder="set_operator_id"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="neo-input"
+              required
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded w-full"
-        >
-          Register
-        </button>
-      </form>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-2">Email Address</label>
+            <input
+              type="email"
+              placeholder="network@node.xyz"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="neo-input"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-2">Security Hash (Password)</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="neo-input"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-futuristic w-full justify-center py-5 mt-4"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+            ) : (
+              <>
+                Register Node
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-12 text-center">
+          <button
+            onClick={() => navigate("/")}
+            className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+          >
+            Already Synced? <span className="text-blue-500 ml-1">Log In</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

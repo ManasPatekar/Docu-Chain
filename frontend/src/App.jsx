@@ -3,7 +3,11 @@ import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
-import ScanResults from "./pages/ScanResults";
+import History from "./pages/History";
+import SharedHistory from "./pages/SharedHistory";
+import AdminConsole from "./pages/AdminConsole";
+import NetworkSetup from "./pages/NetworkSetup";
+import PublicVerify from "./pages/PublicVerify";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./pages/Register";
 
@@ -13,9 +17,8 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Login />} />
-        
-        {/* Public Route */}
         <Route path="/register" element={<Register />} />
+        <Route path="/verify" element={<PublicVerify />} />
 
         {/* Protected Routes */}
         <Route
@@ -23,6 +26,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup"
+          element={
+            <ProtectedRoute>
+              <NetworkSetup />
             </ProtectedRoute>
           }
         />
@@ -35,10 +46,26 @@ export default function App() {
           }
         />
         <Route
-          path="/results"
+          path="/history"
           element={
             <ProtectedRoute>
-              <ScanResults />
+              <History />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/network"
+          element={
+            <ProtectedRoute>
+              <SharedHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminConsole />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,37 @@
+# Environments
+.env
+backend/.env
+frontend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Databases
+*.db
+backend/*.db
+
+# Node
+node_modules/
+smart-contract/node_modules/
+smart-contract/artifacts/
+smart-contract/cache/
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+bin/
+builders/
+config/
+fabric-samples/
+extension/
+DockerInstaller.exe
+DocuChain_Project_Report.docx

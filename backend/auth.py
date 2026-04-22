@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
-from backend.models import User
+from models import User
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 import os

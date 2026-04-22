@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Example SQLite URL — replace with PostgreSQL/MySQL in production
-SQLALCHEMY_DATABASE_URL = "sqlite:///./backend/docuchain.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./docuchain.db"
 
 # If using SQLite, we need this connect_arg
 engine = create_engine(
