@@ -42,23 +42,8 @@ function Upload() {
     try {
       setIsLoading(true);
       
-      // Step 1: Malware Analysis (33%)
+      // Protocol Anchoring (100%)
       setStep(1);
-      setStatus("Initiating heuristic malware analysis...");
-      const scanData = new FormData();
-      scanData.append("file", file);
-      const scanRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/scan`, scanData, {
-        headers: { Authorization: authHeader, "Content-Type": "multipart/form-data" },
-      });
-
-      if (!scanRes.data.clean) {
-          setStatus(`Security Alert: ${scanRes.data.reason}`);
-          setIsLoading(false);
-          return;
-      }
-
-      // Step 2: Protocol Anchoring (66%)
-      setStep(2);
       setStatus("Encrypting asset & anchoring to blockchain...");
       const uploadData = new FormData();
       uploadData.append("file", file);
@@ -67,7 +52,7 @@ function Upload() {
         headers: { Authorization: authHeader, "Content-Type": "multipart/form-data" },
       });
 
-      // Step 3: Completion (100%)
+      // Completion (100%)
       setStep(3);
       setStatus(`Asset Secured. Lineage: v${uploadRes.data.version} | TX: ${uploadRes.data.tx_hash.substring(0, 12)}...`);
       

@@ -160,8 +160,10 @@ async def get_my_network(credentials: HTTPAuthorizationCredentials = Depends(sec
 
 async def internxt_scan(file_content: bytes, filename: str):
     """Scan file using Internxt ClamAV API"""
+    import httpx
     url = "https://clamav.internxt.com/filescan"
     boundary = '----WebKitFormBoundaryDocuChain'
+    import mimetypes
     mime_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
     
     body = [
@@ -169,7 +171,7 @@ async def internxt_scan(file_content: bytes, filename: str):
         f'Content-Disposition: form-data; name="file"; filename="{filename}"',
         f'Content-Type: {mime_type}',
         '',
-        file_content.decode('latin-1'), # Using latin-1 to preserve binary bytes in string format
+        file_content.decode('latin-1'), 
         f"--{boundary}--",
         ''
     ]
@@ -183,16 +185,17 @@ async def internxt_scan(file_content: bytes, filename: str):
     }
     
     try:
-        async with github_session.post(url, data=payload, headers=headers) as resp:
-            if resp.status == 200:
-                result = await resp.json()
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, content=payload, headers=headers, timeout=30.0)
+            if resp.status_code == 200:
+                result = resp.json()
                 return {
                     "infected": result.get('isInfected', False),
                     "viruses": result.get('viruses', []),
                     "engine": "Internxt-ClamAV"
                 }
     except Exception as e:
-        print(f"Internxt scan failed: {e}")
+        logger.error(f"Internxt scan failed: {e}")
     return {"infected": False, "error": "Scan failed", "engine": "Internxt-ClamAV"}
 
 @app.post("/scan")
@@ -440,9 +443,63 @@ async def get_share_link(doc_id: int, hours: int = 24, credentials: HTTPAuthoriz
     prefix = "global" if doc.is_public else f"hub_{user.network_id}"
     object_name = f"{prefix}/v_{doc.version}_{doc.filename}"
     # Generate signed URL via External Client for proper DNS/Signature
-    url = minio_external.get_presigned_url("GET", MINIO_BUCKET_NAME, object_name, expires=timedelta(hours=hours))
+    # We add response-content-disposition=inline to ensure PDFs and images open in the browser preview
+    url = minio_external.get_presigned_url(
+        "GET", 
+        MINIO_BUCKET_NAME, 
+        object_name, 
+        expires=timedelta(hours=hours),
+        response_headers={"response-content-disposition": "inline"}
+    )
         
     return {"share_url": url}
+
+@app.get("/preview/{doc_id}")
+async def preview_document(
+    doc_id: int, 
+    token: str = None, 
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)), 
+    db: Session = Depends(get_db)
+):
+    # Support both Header and Query Param for iframes
+    auth_token = None
+    if credentials:
+        auth_token = credentials.credentials
+    elif token:
+        auth_token = token
+        
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Missing authentication")
+        
+    payload = verify_token(auth_token)
+    user = db.query(User).filter(User.username == payload.get("sub")).first()
+    
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc: raise HTTPException(status_code=404)
+    
+    # Access check
+    if not doc.is_public and doc.network_id != user.network_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    prefix = "global" if doc.is_public else f"hub_{doc.network_id}"
+    object_name = f"{prefix}/v_{doc.version}_{doc.filename}"
+    
+    try:
+        import mimetypes
+        response = minio_internal.get_object(MINIO_BUCKET_NAME, object_name)
+        content_type = mimetypes.guess_type(doc.filename)[0] or "application/octet-stream"
+        
+        return StreamingResponse(
+            response, 
+            media_type=content_type,
+            headers={
+                "Content-Disposition": "inline",
+                "Cache-Control": "no-cache"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Preview failed: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve asset for preview")
 
 @app.get("/verify/{identifier}")
 async def public_verify(identifier: str, db: Session = Depends(get_db)):

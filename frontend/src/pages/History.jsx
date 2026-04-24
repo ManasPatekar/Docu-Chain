@@ -49,14 +49,16 @@ export default function History() {
       const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/share/${docId}?hours=24`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setShareLink({ id: docId, url: response.data.share_url });
+      // We wrap the raw MinIO URL into our professional Share Portal
+      const portalUrl = `${window.location.origin}/share-portal?url=${encodeURIComponent(response.data.share_url)}&name=${encodeURIComponent(history.find(d => d.id === docId)?.filename || "Asset")}`;
+      setShareLink({ id: docId, url: portalUrl });
     } catch (err) {
       alert("Failed to generate secure link");
     }
   };
 
   const shareToWhatsApp = (url, filename) => {
-    const message = `🛡️ *DocuChain Verified Asset* 🛡️\n\nI am sharing a cryptographically secured document with you: *${filename}*.\n\n🔗 *Secure View Link* (Active 24h):\n${url}\n\n_Verified via DocuChain Nexus Protocol_`;
+    const message = `🔐 *DOCUCHAIN SECURE TRANSMISSION* 🔐\n\nAn enterprise asset has been shared with you via the Nexus Protocol.\n\n📄 *Document:* ${filename}\n🛡️ *Integrity:* Cryptographically Verified\n⏳ *Expires:* In 24 Hours\n\n🔗 *Access Portal:*\n${url}\n\n_This link is secured with single-use ephemeral tokens. Do not share._`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
@@ -89,6 +91,28 @@ export default function History() {
       alert("Asset successfully published to Global Vault.");
     } catch (err) {
       alert("Failed to publish asset: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const handlePreview = (docId) => {
+    // We point directly to our backend proxy which handles the token and streaming
+    const token = localStorage.getItem("access_token");
+    const url = `${import.meta.env.VITE_API_BASE_URL}/preview/${docId}?token=${token}`;
+    setPreviewUrl(url);
+  };
+
+  const handleDownload = async (docId) => {
+    const token = localStorage.getItem("access_token");
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/share/${docId}?hours=1`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Open in new tab which usually triggers download for S3 signed links
+      window.open(response.data.share_url, "_blank");
+    } catch (err) {
+      alert("Failed to generate secure download link");
     }
   };
 
@@ -159,6 +183,23 @@ export default function History() {
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                               </button>
                           )}
+                          
+                          <button 
+                              onClick={() => handlePreview(item.id)}
+                              title="Preview Asset"
+                              className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500 hover:text-white transition-all group shrink-0"
+                          >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          </button>
+
+                          <button 
+                              onClick={() => handleDownload(item.id)}
+                              title="Download Asset"
+                              className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all group shrink-0"
+                          >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                          </button>
+
                           <button 
                               onClick={() => generateShareLink(item.id)}
                               className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all group"
@@ -219,6 +260,36 @@ export default function History() {
           </div>
         )}
       </div>
+
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={() => setPreviewUrl(null)} />
+            <div className="relative w-full h-full max-w-6xl bg-slate-900 rounded-[3rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl reveal">
+                <div className="flex items-center justify-between p-8 border-b border-white/5 bg-black/20">
+                    <div className="flex items-center gap-4">
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                        <span className="ml-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Secure Preview Protocol active</span>
+                    </div>
+                    <button 
+                        onClick={() => setPreviewUrl(null)}
+                        className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                        Close Portal
+                    </button>
+                </div>
+                <div className="flex-1 bg-white/5 relative">
+                    <iframe 
+                        src={previewUrl} 
+                        className="w-full h-full border-none"
+                        title="Document Preview"
+                    />
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }

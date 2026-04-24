@@ -10,6 +10,7 @@ import NetworkSetup from "./pages/NetworkSetup";
 import PublicVerify from "./pages/PublicVerify";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./pages/Register";
+import SharePortal from "./pages/SharePortal";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<PublicVerify />} />
+        <Route path="/share-portal" element={<SharePortal />} />
 
         {/* Protected Routes */}
         <Route

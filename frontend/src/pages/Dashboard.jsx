@@ -88,7 +88,7 @@ function Dashboard() {
                             Share this cryptographic token with authorized personnel to onboard them to the Hub.
                         </p>
                         
-                        <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
+                        <div className="mt-8 pt-6 border-t border-white/5 flex flex-col gap-4">
                             <button 
                                 onClick={async () => {
                                     if(window.confirm('Sever connection with this Hub? All access will be revoked.')) {
@@ -100,7 +100,7 @@ function Dashboard() {
                                         navigate("/setup");
                                     }
                                 }}
-                                className="text-[9px] font-black text-white/30 hover:text-red-400 uppercase tracking-widest transition-colors"
+                                className="w-full py-4 bg-[#1e293b] hover:bg-blue-600 border border-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 shadow-xl"
                             >
                                 Leave Network Hub
                             </button>
